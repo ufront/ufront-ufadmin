@@ -1,0 +1,16 @@
+{
+  "name": "ufront-ufadmin",
+  "license": "MIT",
+  "tags": ["ufront","web","cli","shell","interactive","neko"],
+  "description": "A simple web-based admin console for your website.  Currently supports running admin tasks and a modified version of Nicolas' spodadmin for managing your database structure and records.",
+  "contributors": ["fponticelli","jason"],
+  "releasenote": "Initial Release",
+  "version": "1.0.0-beta.1",
+  "url": "https://github.com/ufront/ufront-admin",
+  "dependencies": {
+    "ufront-mvc": "",
+    "detox": "",
+    "ufront-easyauth": "",
+    "ufront-orm": ""
+  }
+}
