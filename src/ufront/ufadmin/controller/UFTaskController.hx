@@ -1,10 +1,10 @@
-package ufront.controller.admin;
+package ufront.ufadmin.controller;
 import ufront.web.mvc.Controller;
 import ufront.web.mvc.ContentResult;
 import ufront.web.mvc.DetoxResult;
 import ufront.web.routing.RouteCollection;
 
-import ufront.view.admin.TaskView;
+import ufront.ufadmin.view.TaskView;
 import ufront.tasks.AdminTaskSet;
 
 import dtx.DetoxLayout;
