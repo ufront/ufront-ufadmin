@@ -1,4 +1,4 @@
-package ufront.db;
+package ufront.spadm;
 
 import sys.db.Manager;
 import spadm.TableInfos;
