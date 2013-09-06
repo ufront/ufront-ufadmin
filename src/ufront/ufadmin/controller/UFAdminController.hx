@@ -1,88 +1,98 @@
 package ufront.ufadmin.controller;
-import ufront.tasks.AdminTaskLog;
-import ufront.web.mvc.Controller;
-import ufront.web.mvc.ContentResult;
-import ufront.web.mvc.DetoxResult;
-import ufront.web.routing.RouteCollection;
 
-import ufront.ufadmin.view.AdminView;
-import ufront.ufadmin.view.TaskView;
 
-import ufront.auth.model.User;
-import ufront.auth.model.Permission;
-import ufront.auth.UserAuth;
+import ufront.web.Controller;
+#if macro 
+	import haxe.macro.Expr;
+#else
+	import ufront.tasks.AdminTaskLog;
+	import ufront.web.result.*;
 
-import dtx.DetoxLayout;
+	import ufront.ufadmin.view.UFAdminLayout;
+	import ufront.ufadmin.view.AdminView;
+	import ufront.ufadmin.view.TaskView;
 
-using Detox;
-using Lambda;
+	import ufront.auth.model.User;
+	import ufront.auth.model.Permission;
+	import ufront.auth.EasyAuth;
+	import ufront.web.error.PageNotFoundError;
 
-class UFAdminController extends Controller
-{
-    public static var models:List<Class<Dynamic>> = new List();
+	import dtx.layout.DetoxLayout;
+	import haxe.ds.StringMap;
+	import ufront.web.Dispatch;
+	import haxe.web.Dispatch.DispatchConfig;
+	using thx.util.CleverSort;
+	using Detox;
+	using Lambda;
+#end
 
-    static var prefix = "/ufadmin";
+#if server
+	class UFAdminController extends Controller
+	{
+		public static macro function addModule( name:ExprOf<String>, title:ExprOf<String>, controller:ExprOf<{}> ):ExprOf<haxe.web.Dispatch.DispatchConfig> {
+			return macro UFAdminController.modules.set( $name, { title: $title, dispatch: ufront.web.Dispatch.make($controller) } );
+		}
 
-    static public function addRoutes(routes:RouteCollection, ?p:String = "/admin")
-    {
-        if (p != null) prefix = p;
-        routes
-        .addRoute(prefix + "/", { controller : "UFAdminController", action : "index" } )
-        .addRoute(prefix + "/tasks/", { controller : "UFTaskController", action : "viewTasks" } )
-        .addRoute(prefix + "/tasks/run/", { controller : "UFTaskController", action : "run" } )
-        .addRoute(prefix + "/db", { controller : "SpodAdminController", action : "runSpodAdmin" } )
-        .addRoute(prefix + "/db/{?*rest}", { controller : "SpodAdminController", action : "runSpodAdmin" } )
-        .addRoute(prefix + "/{?*rest}", { controller : "UFAdminController", action : "notFound" } )
-        ;
-    }
+		#if !macro
+			static var modules:StringMap<{ title:String, dispatch:DispatchConfig }> = new StringMap();
+			static var prefix = "/ufadmin";
 
-    public function index() 
-    {
-        checkAuth();
-        checkTablesExists();
-        var view = new AdminView();
-        return new DetoxResult(view, getLayout());
-    }
 
-    public function notFound() 
-    {
-        checkAuth();
-        var view = "Page not found.".parse();
-        return new DetoxResult(view, getLayout());
-    }
+			public function doDefault( ?module:String, ?d:Dispatch ) {
+				checkAuth();
+				checkTablesExists();
 
-    function checkTablesExists()
-    {
-        if (!sys.db.TableCreate.exists(AdminTaskLog.manager)) sys.db.TableCreate.create(AdminTaskLog.manager);
-    }
+				if ( module==null ) {
+					var view = new AdminView();
+					return new DetoxResult(view, null, getLayout());
+				}
+				else {
+					if ( modules.exists(module) ) 
+						return d.runtimeReturnDispatch( modules.get(module).dispatch );
+					else 
+						return throw new PageNotFoundError();
+				}
+			}
 
-    public static function getLayout()
-    {
-        var template = CompileTime.readXmlFile("ufront/ufadmin/view/layout.html");
-        var layout = new DetoxLayout(template);
-        layout.title = "Ufront Admin Console";
-        layout.addStylesheet("/css/screen.css");
+			public static function checkAuth() {
+				// Only check if tables already exist, otherwise, they're allowed in
+				if (sys.db.TableCreate.exists(User.manager)) {
+					var permissionID = Permission.getPermissionID( UFAdminPermissions.CanAccessAdminArea );
+					var permissions = Permission.manager.search( $permission == permissionID);
 
-        var server = neko.Web.getClientHeader("Host");
-        layout.head.append('<base href="http://$server$prefix/" />'.parse());
-        return layout;
-    }
+					// If a group has this permission, and at least one member belongs to such a group.
+					if (permissions.length>0 && permissions.exists(function (p) { return p.group.users.length > 0; })) {
+						EasyAuth.inst.requirePermission(UFAdminPermissions.CanAccessAdminArea);
+					}
+				}
+				else {
+					// assume Auth tables etc aren't set up yet and let them in without checking.
+				}
+			}
 
-    public static function checkAuth()
-    {
-        // Only check if tables already exist, otherwise, they're allowed in
-        if (sys.db.TableCreate.exists(User.manager))
-        {
-            var permissionID = Permission.getPermissionID(UFAdminPermissions.CanAccessAdminArea);
-            var permissions = Permission.manager.search($permission == permissionID);
+			function checkTablesExists() {
+				if (!sys.db.TableCreate.exists(AdminTaskLog.manager)) sys.db.TableCreate.create(AdminTaskLog.manager);
+			}
 
-            // If a group has this permission, and at least one member belongs to such a group.
-            if (permissions.length > 0 && permissions.exists(function (p) { return p.group.users.length > 0; }))
-            {
-                UserAuth.requirePermission(UFAdminPermissions.CanAccessAdminArea);
-            }
-            // Else: assume stuff isn't set up yet and let them in without checking.
-        }
+			function getLayout() {
+				var layout = new UFAdminLayout();
 
-    }
-}
+				var links = [];
+				for ( name in modules.keys() ) {
+					links.push( { name: name, title: modules.get(name).title } );
+				}
+				links.cleverSort( _.title );
+				layout.links = links;
+
+				layout.title = "Ufront Admin Console";
+				"".doesThisWork();
+				layout.addStylesheet("/css/screen.css");
+
+				// var server = context.request.clientHeaders.get("Host");
+				var server = neko.Web.getClientHeader("Host");
+				layout.head.append('<base href="http://$server$prefix/" />'.parse());
+				return layout;
+			}
+		#end
+	}
+#end

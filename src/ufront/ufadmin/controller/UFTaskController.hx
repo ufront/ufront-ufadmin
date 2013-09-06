@@ -1,12 +1,9 @@
 package ufront.ufadmin.controller;
-import ufront.web.mvc.Controller;
-import ufront.web.mvc.ContentResult;
-import ufront.web.mvc.DetoxResult;
-import ufront.web.routing.RouteCollection;
 
+import ufront.web.Controller;
+import ufront.web.result.*;
 import ufront.ufadmin.view.TaskView;
 import ufront.tasks.AdminTaskSet;
-
 import dtx.DetoxLayout;
 import haxe.CallStack;
 using Detox;
@@ -14,17 +11,16 @@ using Lambda;
 using ufront.util.TimeOfDayTools;
 using StringTools;
 
-class UFTaskController extends Controller
+class UFTaskController extends ufront.web.Controller
 {
-    public function viewTasks()
-    {
+    public function doDefault() {
         UFAdminController.checkAuth();
         var view = new TaskView();
-        view.taskSets.addList(AdminTaskSet.allTaskSets);
+        view.taskSets.addList( AdminTaskSet.allTaskSets );
         return new DetoxResult(view, UFAdminController.getLayout());
     }
 
-    public function run()
+    public function doRun()
     {
         UFAdminController.checkAuth();
         try 

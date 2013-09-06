@@ -1,22 +1,22 @@
-<html>
-	<head>
+<html dtx-name="document">
+	<head dtx-name="head">
 	    <meta charset="utf-8" />
-	    <title>Loading...</title>
+	    <title>$title</title>
 	    <meta name="description" content="" />
 	    <meta name="author" content="" />
 	</head>
-	<body class="container">
+	<body class="container" dtx-name="body">
 		<h1>Ufront Admin Console</h1>
 		<div class="row">
 			<div class="span2">
 				<ul id="main-nav" class="nav-list nav">
 					<li><a href="./">Home</a></li>
-					<li><a href="tasks/">Tasks</a></li>
-					<li><a href="users/">Users</a></li>
-					<li><a href="db/">Database</a></li>
+					<dtx:loop for="l in links">
+						<li><a href="./${l.name}/">${l.title}</a></li>
+					</dtx:loop>
 				</ul>
 			</div>
-			<div id="main-content" class="span10"></div>
+			<div id="main-content" class="span10" dtx-name="contentContainer"></div>
 		</div>
 	</body>
 </html>
