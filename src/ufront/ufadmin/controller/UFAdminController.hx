@@ -14,7 +14,7 @@ import ufront.web.Controller;
 
 	import ufront.auth.model.User;
 	import ufront.auth.model.Permission;
-	import ufront.auth.EasyAuth;
+	import ufront.auth.IAuthHandler;
 	import ufront.web.error.PageNotFoundError;
 
 	import dtx.layout.DetoxLayout;
@@ -35,11 +35,11 @@ import ufront.web.Controller;
 
 		#if !macro
 			static var modules:StringMap<{ title:String, dispatch:DispatchConfig }> = new StringMap();
-			static var prefix = "/ufadmin";
+			public static var prefix = "/ufadmin";
 
 
 			public function doDefault( ?module:String, ?d:Dispatch ) {
-				checkAuth();
+				checkAuth( context.auth );
 				checkTablesExists();
 
 				if ( module==null ) {
@@ -54,7 +54,7 @@ import ufront.web.Controller;
 				}
 			}
 
-			public static function checkAuth() {
+			public static function checkAuth( auth:IAuthHandler<Dynamic> ) {
 				// Only check if tables already exist, otherwise, they're allowed in
 				if (sys.db.TableCreate.exists(User.manager)) {
 					var permissionID = Permission.getPermissionID( UFAdminPermissions.CanAccessAdminArea );
@@ -62,7 +62,7 @@ import ufront.web.Controller;
 
 					// If a group has this permission, and at least one member belongs to such a group.
 					if (permissions.length>0 && permissions.exists(function (p) { return p.group.users.length > 0; })) {
-						EasyAuth.inst.requirePermission(UFAdminPermissions.CanAccessAdminArea);
+						auth.requirePermission(UFAdminPermissions.CanAccessAdminArea);
 					}
 				}
 				else {
