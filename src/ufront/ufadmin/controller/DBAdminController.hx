@@ -6,8 +6,6 @@ class DBAdminController extends Controller
 {
 	public function doDefault( d:Dispatch )
 	{
-		UFAdminController.checkAuth( context.auth );
-		
 		#if neko 
 			spadm.AdminStyle.BASE_URL = "/ufadmin/db/";
 			ufront.spadm.DBAdmin.handler("/ufadmin/db/");
