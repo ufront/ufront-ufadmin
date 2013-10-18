@@ -22,6 +22,7 @@ import ufront.web.Controller;
 	import ufront.web.Dispatch;
 	import haxe.web.Dispatch.DispatchConfig;
 	import ufront.auth.*;
+	import tink.CoreApi;
 	using thx.util.CleverSort;
 	using Detox;
 	using Lambda;
@@ -91,10 +92,17 @@ import ufront.web.Controller;
 					return drawLoginScreen( "" );
 				}
 				else {
-					switch easyAuth.startSession( new EasyAuthDBAdapter(args.user,args.pass) ) {
+					// SYNC HACK: `auth.startSession` returns a Future, but I haven't set up sync APIs/Controllers at
+					// the time of writing, and I'm only using this on Neko/PHP so far, so you can use this sync hack
+					// to get away with it.  Shouldn't be hard to patch up later.
+					var outcome:Outcome<User, PermissionError> = null;
+					easyAuth
+						.startSession( new EasyAuthDBAdapter(args.user,args.pass) )
+						.handle( function(o) outcome=o );
+					switch outcome {
 						case Success( u ):
 							if ( passesAuth() ) 
-								return doDefault( null, d );
+								return cast new RedirectResult( prefix+"/" );
 							else 
 								return drawLoginScreen( args.user );
 						case Failure( e ):
