@@ -15,7 +15,7 @@ import ufront.web.Controller;
 	import ufront.auth.model.*;
 	import ufront.auth.*;
 	import ufront.auth.PermissionError;
-	import ufront.web.error.PageNotFoundError;
+	import ufront.web.HttpError;
 
 	import dtx.layout.DetoxLayout;
 	import haxe.ds.StringMap;
@@ -75,7 +75,7 @@ import ufront.web.Controller;
 						if ( modules.exists(module) ) 
 							return d.runtimeReturnDispatch( modules.get(module).dispatch );
 						else 
-							return throw new PageNotFoundError();
+							return throw HttpError.pageNotFound();
 					}
 				}
 				else {
