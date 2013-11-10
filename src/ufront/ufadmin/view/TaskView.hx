@@ -1,6 +1,7 @@
 package ufront.ufadmin.view;
 
 import dtx.widget.Widget;
+import dtx.widget.KeepWidget;
 import dtx.widget.WidgetLoop;
 import ufront.tasks.AdminTaskLog;
 import ufront.tasks.AdminTaskSet;
@@ -18,7 +19,7 @@ class TaskView extends Widget
 
 }
 
-class TaskSet extends Widget 
+class TaskSet extends KeepWidget 
 {
 	@:isVar public var taskSet(default,set):AdminTaskSet;
 	public var taskList:WidgetLoop<Task, TaskSet_IndividualTask>;
@@ -59,7 +60,7 @@ class TaskSet extends Widget
 	}
 }
 
-class TaskResultView extends Widget 
+class TaskResultView extends KeepWidget 
 {
 	public var results:WidgetLoop<{task:String, description:String, output:String, timeTaken:String}, TaskResultView_Result>;
 
