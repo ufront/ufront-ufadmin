@@ -2,7 +2,7 @@ package ufront.ufadmin;
 
 enum UFAdminPermissions 
 {
-	CanRunMigrations;
-	CanRunAdminTasks;
-	CanAccessAdminArea;
+	UFACanRunMigrations;
+	UFACanRunAdminTasks;
+	UFACanAccessAdminArea;
 }

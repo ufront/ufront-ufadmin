@@ -128,18 +128,18 @@ import ufront.web.Controller;
 				// Only check if tables already exist, otherwise, they're allowed in
 				try {
 					if (sys.db.TableCreate.exists(User.manager)) {
-						var permissionID = Permission.getPermissionID( UFAdminPermissions.CanAccessAdminArea );
+						var permissionID = Permission.getPermissionID( UFAdminPermissions.UFACanAccessAdminArea );
 						var permissions = Permission.manager.search( $permission == permissionID);
 
 						// If a group has this permission, and at least one member belongs to such a group.
 						if (permissions.length>0 && permissions.exists(function (p) { return p.group.users.length > 0; })) {
-							return context.auth.hasPermission(UFAdminPermissions.CanAccessAdminArea);
+							return context.auth.hasPermission(UFAdminPermissions.UFACanAccessAdminArea);
 						}
 					}
 				}
 				catch ( e:Dynamic ) {}
 				
-				// Either Auth tables aren't set up yet, or no one has "CanAccessAdminArea", so let them in.
+				// Either Auth tables aren't set up yet, or no one has "UFACanAccessAdminArea", so let them in.
 				return true;
 			}
 
