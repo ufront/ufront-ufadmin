@@ -1,170 +1,206 @@
 package ufront.ufadmin.controller;
 
 
+import ufront.web.context.ActionContext;
 import ufront.web.Controller;
-#if macro 
-	import haxe.macro.Expr;
-#else
-	import ufront.tasks.AdminTaskLog;
-	import ufront.web.result.*;
+import ufront.tasks.AdminTaskLog;
+import ufront.web.result.*;
 
-	import ufront.ufadmin.view.UFAdminLayout;
-	import ufront.ufadmin.view.AdminView;
-	import ufront.ufadmin.view.TaskView;
+import ufront.ufadmin.view.UFAdminLayout;
+import ufront.ufadmin.view.AdminView;
+import ufront.ufadmin.view.TaskView;
 
-	import ufront.auth.model.*;
-	import ufront.auth.*;
-	import ufront.auth.PermissionError;
-	import ufront.web.HttpError;
+import ufront.auth.model.*;
+import ufront.auth.*;
+import ufront.auth.PermissionError;
+import ufront.web.HttpError;
 
-	import dtx.layout.DetoxLayout;
-	import haxe.ds.StringMap;
-	import ufront.web.Dispatch;
-	import haxe.web.Dispatch.DispatchConfig;
-	import ufront.auth.*;
-	import tink.CoreApi;
-	using thx.util.CleverSort;
-	using Detox;
-	using Lambda;
-#end
+import dtx.layout.DetoxLayout;
+import haxe.ds.StringMap;
+import ufront.web.Dispatch;
+import haxe.web.Dispatch.DispatchConfig;
+import ufront.auth.*;
+import tink.CoreApi;
+using thx.util.CleverSort;
+using Detox;
+using Lambda;
+using StringTools;
 
 #if server
 	/**
 		A simple admin area for your site.  
 
-		Does not include much by default, but you can add other controllers (modules) such as the DBAdminController or your own custom controller.
+		Default modules include:
+
+		- DBAdminModule
+
+		More can be added using `addModule()`
 	**/
 	class UFAdminController extends Controller
 	{
+		//
+		// Member variables / methods
+		//
+
+		@inject public var easyAuth:EasyAuth;
+
+		var modules:StringMap<UFAdminModuleController>;
+		var prefix:String;
+
+		public function new( c:ActionContext ) {
+			super( c );
+			modules = new StringMap();
+
+			// Figure out the prefix, needed for some absolute links
+			var uri = c.request.uri;
+			if ( uri.startsWith("/") ) uri = uri.substr( 1 );
+			if ( uri.endsWith("/") ) uri = uri.substr( 0, uri.length-1 );
+			var remainingUri = c.uriParts.join("/");
+
+			var prefixLength = uri.length-remainingUri.length;
+			prefix = "/"+uri.substr( 0, prefixLength );
+			if ( prefix.endsWith("/") ) prefix = prefix.substr( 0, prefix.length-1 );
+
+			// Add default modules
+			addModule( DBAdminModule );
+		}
+
 		/**
 			Add a controller to the UFAdminController menu
 
-			Any controller added will be available as a subroute of your admin area, and will require the `UFAdminPermissions.CanAccessAdminArea` permission.  
+			Any controller added will be available as a subroute of your admin area.  eg `/ufadmin/db/`
 
-			If no user has that permission, it is assumed your site is still not completely set up, and access will be granted.
+			The module will only be accessible if the user has the `UFAdminPermissions.CanAccessAdminArea` permission and if the module's `checkPermissions()` function returns true.
+
+			Modules will be sorted alphabetically by their `slug` field.
 
 			@param name: the slug/URL to use for this module
 			@param title: the name to give this module on the side menu
 			@param controller: the instantiated module
 		**/
-		public static macro function addModule( name:ExprOf<String>, title:ExprOf<String>, controller:ExprOf<{}> ):ExprOf<haxe.web.Dispatch.DispatchConfig> {
-			return macro UFAdminController.modules.set( $name, { title: $title, dispatch: ufront.web.Dispatch.make($controller) } );
+		public function addModule( controllerClass:Class<UFAdminModuleController> ) {
+			var controller = Type.createInstance( controllerClass, [this.context] );
+			modules.set( controller.slug, controller );
 		}
 
-		#if !macro
-			
-			static var modules:StringMap<{ title:String, dispatch:DispatchConfig }> = new StringMap();
-			public static var prefix = "/ufadmin";
-			@inject public var easyAuth:EasyAuth;
+		/**
+			Clear the existing modules, including those added by default.
+		**/
+		public function clearModules() {
+			modules = new StringMap();
+		}
 
-			//
-			// Dispatch actions
-			// 
+		//
+		// Key Routes
+		// 
 
-			public function doDefault( ?module:String, d:Dispatch ) {
+		@:route( "/login/", GET )
+		public function loginScreen() {
+			return drawLoginScreen( "" );
+		}
 
-				checkTablesExists();
-				if ( passesAuth() ) {
-					if ( module==null ) {
-						var view = new AdminView();
-						var viewCont = getViewContainer();
-						viewCont.contentContainer.append( view );
-						return getLayout( "UF Admin Console", viewCont.html() );
-					}
-					else {
-						if ( modules.exists(module) ) 
-							return d.runtimeReturnDispatch( modules.get(module).dispatch );
-						else 
-							return throw HttpError.pageNotFound();
-					}
-				}
-				else {
-					if (context.auth.isLoggedIn()) 
-						return throw DoesNotHavePermission('You do not have permission to access the /ufadmin/ folder');
-					else 
-						return cast doLogin( d );
-				}
-			}
-
-			public function doLogin( d:Dispatch, ?args:{ user:String, pass:String } ) {
-
-				if (args==null) {
-					return drawLoginScreen( "" );
-				}
-				else {
-					// SYNC HACK: `auth.startSession` returns a Future, but I haven't set up sync APIs/Controllers at
-					// the time of writing, and I'm only using this on Neko/PHP so far, so you can use this sync hack
-					// to get away with it.  Shouldn't be hard to patch up later.
-					var outcome:Outcome<User, PermissionError> = null;
-					easyAuth
-						.startSession( new EasyAuthDBAdapter(args.user,args.pass) )
-						.handle( function(o) outcome=o );
+		@:route( "/login/", POST )
+		public function attemptLogin( args:{ user:String, pass:String } ) {
+			return easyAuth
+				.startSession( new EasyAuthDBAdapter(args.user,args.pass) )
+				.map( function(outcome):ActionResult {
 					switch outcome {
 						case Success( u ):
 							if ( passesAuth() ) 
-								return cast new RedirectResult( prefix+"/" );
+								return new RedirectResult( prefix+"/" );
 							else 
-								return drawLoginScreen( args.user );
+								// They're logged in, but don't have permission to be here.
+								return throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
 						case Failure( e ):
+							// They were not able to log in.
 							return drawLoginScreen( args.user );
 					}
+				});
+		}
+
+		@:route( "/logout/" )
+		public function doLogout() {
+			easyAuth.endSession();
+			return loginScreen();
+		}
+
+		@:route("/") 
+		public function index():ActionResult {
+			checkTablesExists();
+			if ( passesAuth() ) {
+				var view = new AdminView();
+				var viewCont = getViewContainer();
+				viewCont.contentContainer.append( view );
+				return getLayout( "UF Admin Console", viewCont.html() );
+			}
+			else {
+				if (context.auth.isLoggedIn()) return throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
+				else return loginScreen();
+			}
+		}
+
+		@:route( "/$module/*" )
+		public function doModule( module:String ) {
+
+			if ( passesAuth() ) {
+				if ( modules.exists(module) ) {
+					var controller = modules.get(module);
+					return controller.execute();
 				}
+				else return throw HttpError.pageNotFound();
 			}
+			else return throw DoesNotHavePermission('You do not have permission to access the /ufadmin/ folder');
+		}
 
-			public function doLogout( d:Dispatch ) {
-				easyAuth.endSession();
-				return doLogin( d );
-			}
+		//
+		// Private
+		// 
 
-			//
-			// Private
-			// 
+		function checkTablesExists() {
+			// if (!sys.db.TableCreate.exists(AdminTaskLog.manager)) sys.db.TableCreate.create(AdminTaskLog.manager);
+		}
 
-			function checkTablesExists() {
-				// if (!sys.db.TableCreate.exists(AdminTaskLog.manager)) sys.db.TableCreate.create(AdminTaskLog.manager);
-			}
+		function passesAuth():Bool {
+			// Only check if tables already exist, otherwise, they're allowed in
+			try {
+				if (sys.db.TableCreate.exists(User.manager)) {
+					var permissionID = Permission.getPermissionID( UFAdminPermissions.UFACanAccessAdminArea );
+					var permissions = Permission.manager.search( $permission == permissionID);
 
-			function passesAuth():Bool {
-				// Only check if tables already exist, otherwise, they're allowed in
-				try {
-					if (sys.db.TableCreate.exists(User.manager)) {
-						var permissionID = Permission.getPermissionID( UFAdminPermissions.UFACanAccessAdminArea );
-						var permissions = Permission.manager.search( $permission == permissionID);
-
-						// If a group has this permission, and at least one member belongs to such a group.
-						if (permissions.length>0 && permissions.exists(function (p) { return p.group.users.length > 0; })) {
-							return context.auth.hasPermission(UFAdminPermissions.UFACanAccessAdminArea);
-						}
+					// If a group has this permission, and at least one member belongs to such a group.
+					if (permissions.length>0 && permissions.exists(function (p) { return p.group.users.length > 0; })) {
+						return context.auth.hasPermission(UFAdminPermissions.UFACanAccessAdminArea);
 					}
 				}
-				catch ( e:Dynamic ) {}
-				
-				// Either Auth tables aren't set up yet, or no one has "UFACanAccessAdminArea", so let them in.
-				return true;
 			}
+			catch ( e:Dynamic ) {}
+			
+			// Either Auth tables aren't set up yet, or no one has "UFACanAccessAdminArea", so let them in.
+			return true;
+		}
 
-			function drawLoginScreen( existingUser:String ) {
-				var loginView = CompileTime.interpolateFile( "ufront/ufadmin/view/login.html" );
-				return getLayout( "UF Admin Login", loginView );
+		function drawLoginScreen( existingUser:String ) {
+			var loginView = CompileTime.interpolateFile( "ufront/ufadmin/view/login.html" );
+			return getLayout( "UF Admin Login", loginView );
+		}
+
+		function getLayout( title:String, content:String ) {
+			var server = context.request.clientHeaders.get("Host");
+			var content = CompileTime.interpolateFile( "ufront/ufadmin/view/layout.html" );
+			return new ContentResult( content, "text/html" );
+		}
+
+		function getViewContainer() {
+			var layout = new UFAdminLayout();
+
+			var links:Array<{ slug:String, title:String }> = [];
+			for ( module in modules ) {
+				links.push( module );
 			}
-
-			function getLayout( title:String, content:String ) {
-				var server = context.request.clientHeaders.get("Host");
-				return CompileTime.interpolateFile( "ufront/ufadmin/view/layout.html" );
-			}
-
-			function getViewContainer() {
-				var layout = new UFAdminLayout();
-
-				var links = [];
-				for ( name in modules.keys() ) {
-					links.push( { name: name, title: modules.get(name).title } );
-				}
-				links.cleverSort( _.title );
-				layout.links = links;
-				
-				return layout;
-			}
-		#end
+			links.cleverSort( _.title );
+			layout.links = links;
+			
+			return layout;
+		}
 	}
 #end
