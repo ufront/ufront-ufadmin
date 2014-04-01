@@ -5,8 +5,8 @@
   "tags": ["ufront","web","neko","dashboard","admin"],
   "description": "A simple web-based admin console for your website.  Currently supports running admin tasks and a modified version of Nicolas' spodadmin for managing your database structure and records.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Update for compatibility with ufront 1.0.0-beta.3.  Small fixes to module system",
-  "version": "1.0.0-beta.2",
+  "releasenote": "Update for compatibility new ufront routing tools. Minor fixes.",
+  "version": "1.0.0-beta.3",
   "url": "https://github.com/ufront/ufront-admin",
   "dependencies": {
     "ufront-mvc": "",
