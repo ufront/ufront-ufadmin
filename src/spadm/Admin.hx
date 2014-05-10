@@ -25,7 +25,13 @@ package spadm;
 import sys.db.Object;
 import sys.db.Manager;
 import sys.db.Types;
-
+#if neko
+	import neko.Web;
+	import neko.Lib;
+#elseif php
+	import php.Web;
+	import php.Lib;
+#end
 import spadm.Custom;
 import spadm.TableInfos.TableType;
 import spadm.TableInfos.ManagerAccess;
@@ -76,7 +82,7 @@ class Admin {
 
 	function getTables() {
 		var tables = new Array();
-		var classes = neko.Lib.getClasses();
+		var classes = Lib.getClasses();
 		crawl(tables,classes);
 		tables.sort(function(t1,t2) { return if( t1.name > t2.name ) 1 else if( t1.name < t2.name ) -1 else 0; });
 		return tables;
@@ -118,8 +124,10 @@ class Admin {
 		var sync = false;
 		var allTables = new List();
 		var rq = execute(TableInfos.allTablesRequest());
-		for( r in rq )
-			allTables.add(rq.getResult(0));
+		for( r in rq ) {
+			var fieldName = Reflect.fields(r)[0];
+			allTables.add(Reflect.field(r,fieldName));
+		}
 		var windows = Sys.systemName() == "Windows";
 		for( t in getTables() ) {
 			var rights = getRights(createInstance(t));
@@ -214,9 +222,11 @@ class Admin {
 				defval = Id.decode(defval);
 			case DSerialized:
 				defval = new Serialized(defval).escape();
-			case DNekoSerialized:
-				var v = try haxe.Serializer.run(neko.Lib.localUnserialize(defval)) catch( e : Dynamic ) ("ERROR : " + Std.string(e));
-				defval = new Serialized(v).escape();
+			#if neko
+				case DNekoSerialized:
+					var v = try haxe.Serializer.run(Lib.localUnserialize(defval)) catch( e : Dynamic ) ("ERROR : " + Std.string(e));
+					defval = new Serialized(v).escape();
+			#end
 			case DData:
 				var str = defval.toString();
 				defval = new Serialized(str).escape();
@@ -365,7 +375,7 @@ class Admin {
 			return new Serialized(v).encode();
 		case DNekoSerialized:
 			var str = new Serialized(v).encode();
-			var val = neko.Lib.serialize(haxe.Unserializer.run(str));
+			var val = Lib.serialize(haxe.Unserializer.run(str));
 			return val;
 		case DData:
 			var s = new Serialized(v).encode();
@@ -385,11 +395,7 @@ class Admin {
 	}
 
 	function createInstance( table : TableInfos ) : Object {
-		var c = Type.createEmptyInstance(table.cl);
-		#if php
-		untyped c.__init_object();
-		#end
-		return c;
+		return Type.createEmptyInstance(table.cl);
 	}
 
 	function getRights( ?t : Object, ?table : TableInfos ) : RightsInfos {
@@ -451,13 +457,13 @@ class Admin {
 			insert(table,params);
 			return;
 		}
-		style.goto(table.className+"/edit/"+table.identifier(inst));
+		style.gotoURL(table.className+"/edit/"+table.identifier(inst));
 	}
 
 	function doCreate(table : TableInfos) {
 		try {
 			execute(table.createRequest(false));
-			style.goto("");
+			style.gotoURL("");
 		} catch( e : Dynamic ) {
 			index(Std.string(e));
 		}
@@ -467,14 +473,14 @@ class Admin {
 		if( !allowDrop )
 			throw "Drop not allowed";
 		execute(table.dropRequest());
-		style.goto("");
+		style.gotoURL("");
 	}
 
 	function doCleanup( table : TableInfos ) {
 		if( !getRights(table).can.truncate )
 			throw "Can't cleanup";
 		execute(table.truncateRequest());
-		style.goto("");
+		style.gotoURL("");
 	}
 
 	function edit( table :  TableInfos, id : String, ?params : Map<String,String>, ?error : String, ?errorMsg : String ) {
@@ -524,7 +530,7 @@ class Admin {
 	function doEdit( table : TableInfos, id : String, params : Map<String,String> ) {
 		var inst = table.fromIdentifier(id);
 		if( inst == null ) {
-			style.goto(table.className+"/edit/"+id);
+			style.gotoURL(table.className+"/edit/"+id);
 			return;
 		}
 		updateParams(table,params);
@@ -573,11 +579,11 @@ class Admin {
 			edit(table,id,params,null,Std.string(e));
 			return;
 		}
-		style.goto(table.className+"/edit/"+table.identifier(inst));
+		style.gotoURL(table.className+"/edit/"+table.identifier(inst));
 	}
 
 	function updateParams( table : TableInfos, params : Map<String,String> ) {
-		var tmp = neko.Web.getMultipart(maxUploadSize);
+		var tmp = Web.getMultipart(maxUploadSize);
 		for( k in tmp.keys() )
 			params.set(k,tmp.get(k));
 		for( r in table.relations ) {
@@ -618,7 +624,7 @@ class Admin {
 	function doDelete( table : TableInfos, id : String ) {
 		var inst = table.fromIdentifier(id);
 		if( inst == null ) {
-			style.goto(table.className+"/edit/"+id);
+			style.gotoURL(table.className+"/edit/"+id);
 			return;
 		}
 		if( !getRights(inst).can.delete ) {
@@ -627,13 +633,13 @@ class Admin {
 		}
 		inst.delete();
 		log("Deleted "+table.name+" "+id);
-		style.goto("");
+		style.gotoURL("");
 	}
 
 	function doDownload( table : TableInfos, id : String, field : String ) {
 		var inst = table.fromIdentifier(id);
 		if( inst == null ) {
-			style.goto(table.className+"/edit/"+id);
+			style.gotoURL(table.className+"/edit/"+id);
 			return;
 		}
 		var rights = getRights(inst);
@@ -643,9 +649,9 @@ class Admin {
 			edit(table,id,null,null,"Can't Download data");
 			return;
 		}
-		neko.Web.setHeader("Content-Type","text/binary");
-		neko.Web.setHeader("Content-Length",Std.string(data.length));
-		neko.Lib.print(data);
+		Web.setHeader("Content-Type","text/binary");
+		Web.setHeader("Content-Length",Std.string(data.length));
+		Lib.print(data);
 	}
 
 	function search( table : TableInfos, params : Map<String,String> ) {
@@ -771,7 +777,7 @@ class Admin {
 					if( has(rights.invisible,f.name) )
 						continue;
 					var data = Reflect.field(r,f.name);
-					var str = try Std.string(data) catch( e : Dynamic ) { if(!Std.is(data,Date)) neko.Lib.rethrow(e); "#INVALID"; };
+					var str = try Std.string(data) catch( e : Dynamic ) { if(!Std.is(data,Date)) Lib.rethrow(e); "#INVALID"; };
 					if( str.length >= 20 )
 						str = str.substr(0,17) + "...";
 					style.nextRow(false);
@@ -883,7 +889,7 @@ class Admin {
 				return;
 			}
 		}
-		style.goto("");
+		style.gotoURL("");
 	}
 
 	function indexId( i : { unique : Bool, keys : List<String> } ) {
@@ -1009,10 +1015,10 @@ class Admin {
 
 	public function process( ?url : Array<String>, ?baseUrl = "/db/" ) {
 		if( url == null ) {
-			url = neko.Web.getURI().substr(baseUrl.length).split("/");
+			url = Web.getURI().substr(baseUrl.length).split("/");
 		}
 		if( url.length == 0 ) url.push("");
-		var params = neko.Web.getParams();
+		var params = Web.getParams();
 		switch( url[0] ) {
 		case "":
 			style = new AdminStyle(null);
@@ -1053,7 +1059,9 @@ class Admin {
 	}
 
 	static function log(msg:String) {
-		neko.Web.logMessage("[DBADM] "+neko.Web.getHostName()+" "+Date.now().toString()+" "+neko.Web.getClientIP()+" - "+msg);
+		#if neko
+			Web.logMessage("[DBADM] "+Web.getHostName()+" "+Date.now().toString()+" "+Web.getClientIP()+" - "+msg);
+		#end
 	}
 
 	public static function handler( ?baseUrl:String ) {
@@ -1063,11 +1071,11 @@ class Admin {
 		} catch( e : Dynamic ) {
 			// rollback in case of multiple delete/update - no effect on DB struct changes
 			// since they are done outside of transaction
+			Lib.print("<pre>");
+			Lib.print(Std.string(e));
+			Lib.print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
+			Lib.print("</pre>");
 			Manager.cnx.rollback();
-			neko.Lib.print("<pre>");
-			neko.Lib.print(Std.string(e));
-			neko.Lib.print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
-			neko.Lib.print("</pre>");
 		}
 	}
 

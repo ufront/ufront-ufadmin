@@ -23,8 +23,15 @@
 package spadm;
 
 import haxe.macro.Context;
+#if neko
+	import neko.Web;
+	import neko.Lib;
+#elseif php
+	import php.Web;
+	import php.Lib;
+#end
 #if !macro
-import spadm.TableInfos.TableType;
+	import spadm.TableInfos.TableType;
 #end
 
 class MacroHelper {
@@ -64,7 +71,7 @@ class AdminStyle {
 			for( x in Reflect.fields(params) )
 				str = str.split("@"+x).join(Reflect.field(params,x));
 		}
-		neko.Lib.println(str);
+		Lib.println(str);
 	}
 
 	public function text(str,?title) {
@@ -121,8 +128,8 @@ class AdminStyle {
 		out("</li>");
 	}
 
-	public function goto(url) {
-		neko.Web.redirect(BASE_URL+url);
+	public function gotoURL(url) {
+		Web.redirect(BASE_URL+url);
 	}
 
 	public function link( url, name ) {

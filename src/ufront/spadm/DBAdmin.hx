@@ -100,11 +100,12 @@ class DBAdmin extends spadm.Admin
 		} catch( e : Dynamic ) {
 			// rollback in case of multiple delete/update - no effect on DB struct changes
 			// since they are done outside of transaction
+			Sys.print("<pre>");
+			Sys.println(Std.string(e));
+			Sys.println(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
+			Sys.println(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
+			Sys.print("</pre>");
 			Manager.cnx.rollback();
-			neko.Lib.print("<pre>");
-			neko.Lib.print(Std.string(e));
-			neko.Lib.print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
-			neko.Lib.print("</pre>");
 		}
 	}
 }
