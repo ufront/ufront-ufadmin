@@ -4,5 +4,7 @@ using Detox;
 
 class UFAdminLayout extends dtx.widget.Widget
 {
-	public var links:Array<{ slug:String, title:String }>;
+	public var links:Array<Link>;
 }
+
+typedef Link = { slug:String, title:String };
