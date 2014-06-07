@@ -3,7 +3,6 @@ package ufront.ufadmin.controller;
 
 import ufront.web.context.ActionContext;
 import ufront.web.Controller;
-import ufront.tasks.AdminTaskLog;
 import ufront.web.result.*;
 
 import ufront.ufadmin.view.UFAdminLayout;
