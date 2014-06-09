@@ -3,6 +3,7 @@ package ufront.ufadmin.controller;
 
 import ufront.web.context.ActionContext;
 import ufront.web.Controller;
+import ufront.web.result.ActionResult;
 import ufront.web.result.*;
 
 import ufront.ufadmin.view.UFAdminLayout;
@@ -13,11 +14,8 @@ import ufront.auth.*;
 import ufront.auth.PermissionError;
 import ufront.web.HttpError;
 
-import dtx.layout.DetoxLayout;
 import haxe.ds.StringMap;
-import ufront.web.Dispatch;
-import haxe.web.Dispatch.DispatchConfig;
-import ufront.auth.*;
+import ufront.auth.api.EasyAuthApi;
 import tink.CoreApi;
 using thx.util.CleverSort;
 using Detox;
@@ -40,7 +38,7 @@ using StringTools;
 		// Member variables / methods
 		//
 
-		@inject public var easyAuth:EasyAuth;
+		@inject public var easyAuthApi:EasyAuthApi;
 
 		var modules:StringMap<UFAdminModuleController>;
 		var prefix:String;
@@ -93,32 +91,28 @@ using StringTools;
 		// 
 
 		@:route( "/login/", GET )
-		public function loginScreen() {
+		public function loginScreen():ActionResult {
 			return drawLoginScreen( "" );
 		}
 
 		@:route( "/login/", POST )
-		public function attemptLogin( args:{ user:String, pass:String } ) {
-			return easyAuth
-				.startSession( new EasyAuthDBAdapter(args.user,args.pass) )
-				.map( function(outcome):ActionResult {
-					switch outcome {
-						case Success( u ):
-							if ( passesAuth() ) 
-								return new RedirectResult( prefix+"/" );
-							else 
-								// They're logged in, but don't have permission to be here.
-								return throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
-						case Failure( e ):
-							// They were not able to log in.
-							return drawLoginScreen( args.user );
-					}
-				});
+		public function attemptLogin( args:{ user:String, pass:String } ):ActionResult {
+			switch easyAuthApi.attemptLogin( args.user, args.pass ) {
+				case Success( u ):
+					if ( passesAuth() ) 
+						return new RedirectResult(prefix+"/");
+					else 
+						// They're logged in, but don't have permission to be here.
+						throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
+				case Failure( e ):
+					// They were not able to log in.
+					return drawLoginScreen(args.user);
+			}
 		}
 
 		@:route( "/logout/" )
-		public function doLogout() {
-			easyAuth.endSession();
+		public function doLogout():ActionResult {
+			easyAuthApi.logout();
 			return loginScreen();
 		}
 
@@ -138,7 +132,7 @@ using StringTools;
 		}
 
 		@:route( "/$module/*" )
-		public function doModule( module:String ) {
+		public function doModule( module:String ):FutureActionOutcome {
 
 			if ( passesAuth() ) {
 				if ( modules.exists(module) ) {
@@ -161,19 +155,22 @@ using StringTools;
 		function passesAuth():Bool {
 			// Only check if tables already exist, otherwise, they're allowed in
 			try {
-				if (sys.db.TableCreate.exists(User.manager)) {
+				if (sys.db.TableCreate.exists(Permission.manager)) {
 					var permissionID = Permission.getPermissionID( UFAdminPermissions.UFACanAccessAdminArea );
-					var permissions = Permission.manager.search( $permission == permissionID);
+					var permissions = Permission.manager.search($permission == permissionID);
 
 					// If a group has this permission, and at least one member belongs to such a group.
-					if (permissions.length>0 && permissions.exists(function (p) { return p.group.users.length > 0; })) {
+					if (permissions.length>0 && permissions.exists(function (p) { return p.user!=null || (p.group!=null && p.group.users.length>0); })) {
 						return context.auth.hasPermission(UFAdminPermissions.UFACanAccessAdminArea);
 					}
 				}
 			}
-			catch ( e:Dynamic ) {}
+			catch ( e:Dynamic ) {
+				ufError('Failed to check for permissions: $e');
+			}
 			
 			// Either Auth tables aren't set up yet, or no one has "UFACanAccessAdminArea", so let them in.
+			ufLog("/ufadmin/ is being accessed when the tables and permissions are not set up, so we are not checking authentication.");
 			return true;
 		}
 
