@@ -6,13 +6,12 @@
   "description": "A simple web-based admin console for your website.  Currently supports running admin tasks and a modified version of Nicolas' spodadmin for managing your database structure and records.",
   "contributors": ["fponticelli","jason"],
   "releasenote": "Update for compatibility new ufront routing tools. Minor fixes.",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "url": "https://github.com/ufront/ufront-admin",
   "dependencies": {
-    "ufront-mvc": "",
-    "detox": "",
-    "ufront-easyauth": "",
-    "hscript": "",
-    "ufront-orm": ""
+    "ufront-mvc": "1.0.0-rc.1",
+    "ufront-easyauth": "1.0.0-rc.1",
+    "hscript": "2.0.1",
+    "ufront-orm": "1.0.0-rc.1"
   }
 }
