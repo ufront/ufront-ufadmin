@@ -1,7 +1,7 @@
 package ufront.ufadmin.controller;
 
 
-import ufront.web.context.ActionContext;
+import ufront.web.context.HttpContext;
 import ufront.web.Controller;
 import ufront.web.result.ActionResult;
 import ufront.web.result.*;
@@ -43,7 +43,7 @@ using StringTools;
 		var modules:StringMap<UFAdminModuleController>;
 		var prefix:String;
 
-		public function new( c:ActionContext ) {
+		public function new( c:HttpContext ) {
 			super( c );
 			modules = new StringMap();
 
@@ -51,7 +51,7 @@ using StringTools;
 			var uri = c.request.uri;
 			if ( uri.startsWith("/") ) uri = uri.substr( 1 );
 			if ( uri.endsWith("/") ) uri = uri.substr( 0, uri.length-1 );
-			var remainingUri = c.uriParts.join("/");
+			var remainingUri = c.actionContext.uriParts.join("/");
 
 			var prefixLength = uri.length-remainingUri.length;
 			prefix = "/"+uri.substr( 0, prefixLength );

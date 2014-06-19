@@ -16,7 +16,7 @@ class DBAdminModule extends Controller
 	{
 		spadm.AdminStyle.BASE_URL = "/ufadmin/db/";
 		ufront.spadm.DBAdmin.handler("/ufadmin/db/");
-		context.httpContext.completion.set( CRequestHandlersComplete );
-		context.httpContext.completion.set( CFlushComplete );
+		context.completion.set( CRequestHandlersComplete );
+		context.completion.set( CFlushComplete );
 	}
 }
