@@ -3,11 +3,11 @@
 	<div class="col-sm-2">
 		<ul id="main-nav" class="nav-list nav">
 			<li><a href="./">Home</a></li>
-			<dtx:loop for="l in links" type="Link">
-				<li><a href="./${l.slug}/">${l.title}</a></li>
-			</dtx:loop>
+			$moduleLinks
 			<li><a href="./logout/">Logout</a></li>
 		</ul>
 	</div>
-	<div id="main-content" class="col-sm-10" dtx-name="contentContainer"></div>
+	<div class="col-sm-10">
+		$view
+	</div>
 </div>

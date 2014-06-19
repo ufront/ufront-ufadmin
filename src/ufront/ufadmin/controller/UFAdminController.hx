@@ -5,20 +5,14 @@ import ufront.web.context.HttpContext;
 import ufront.web.Controller;
 import ufront.web.result.ActionResult;
 import ufront.web.result.*;
-
-import ufront.ufadmin.view.UFAdminLayout;
-import ufront.ufadmin.view.AdminView;
-
 import ufront.auth.model.*;
 import ufront.auth.*;
 import ufront.auth.PermissionError;
 import ufront.web.HttpError;
-
 import haxe.ds.StringMap;
 import ufront.auth.api.EasyAuthApi;
 import tink.CoreApi;
 using thx.util.CleverSort;
-using Detox;
 using Lambda;
 using StringTools;
 
@@ -120,10 +114,8 @@ using StringTools;
 		public function index():ActionResult {
 			checkTablesExists();
 			if ( passesAuth() ) {
-				var view = new AdminView();
-				var viewCont = getViewContainer();
-				viewCont.contentContainer.append( view );
-				return getLayout( "UF Admin Console", viewCont.html() );
+				var view = CompileTime.interpolateFile( "ufront/ufadmin/view/welcome.html" );
+				return wrapInLayout( "UF Admin Console", wrapInContainer(view) );
 			}
 			else {
 				if (context.auth.isLoggedIn()) return throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
@@ -176,26 +168,28 @@ using StringTools;
 
 		function drawLoginScreen( existingUser:String ) {
 			var loginView = CompileTime.interpolateFile( "ufront/ufadmin/view/login.html" );
-			return getLayout( "UF Admin Login", loginView );
+			return wrapInLayout( "UF Admin Login", loginView );
 		}
 
-		function getLayout( title:String, content:String ) {
+		function wrapInLayout( title:String, content:String ) {
 			var server = context.request.clientHeaders.get("Host");
 			var content = CompileTime.interpolateFile( "ufront/ufadmin/view/layout.html" );
 			return new ContentResult( content, "text/html" );
 		}
 
-		function getViewContainer() {
-			var layout = new UFAdminLayout();
+		function wrapInContainer( view:String ) {
+			// var layout = new UFAdminLayout();
 
 			var links:Array<{ slug:String, title:String }> = [];
+
 			for ( module in modules ) {
 				links.push( module );
 			}
 			links.cleverSort( _.title );
-			layout.links = links;
+			var moduleLinks = [ for (l in links) '<li><a href="./${l.slug}/">${l.title}</a></li>' ].join("\n");
 			
-			return layout;
+
+			return CompileTime.interpolateFile( "ufront/ufadmin/view/container.html" );
 		}
 	}
 #end
