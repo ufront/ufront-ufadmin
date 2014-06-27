@@ -7,7 +7,7 @@ import ufront.web.result.ActionResult;
 import ufront.web.result.*;
 import ufront.auth.model.*;
 import ufront.auth.*;
-import ufront.auth.PermissionError;
+import ufront.auth.AuthError;
 import ufront.web.HttpError;
 import haxe.ds.StringMap;
 import ufront.auth.api.EasyAuthApi;
@@ -97,7 +97,7 @@ using StringTools;
 						return new RedirectResult(prefix+"/");
 					else 
 						// They're logged in, but don't have permission to be here.
-						throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
+						throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 				case Failure( e ):
 					// They were not able to log in.
 					return drawLoginScreen(args.user);
@@ -118,7 +118,7 @@ using StringTools;
 				return wrapInLayout( "UF Admin Console", wrapInContainer(view) );
 			}
 			else {
-				if (context.auth.isLoggedIn()) return throw DoesNotHavePermission('You do not have permission to access the $prefix/ folder');
+				if (context.auth.isLoggedIn()) return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 				else return loginScreen();
 			}
 		}
@@ -133,7 +133,7 @@ using StringTools;
 				}
 				else return throw HttpError.pageNotFound();
 			}
-			else return throw DoesNotHavePermission('You do not have permission to access the /ufadmin/ folder');
+			else return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 		}
 
 		//
