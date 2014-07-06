@@ -1,11 +1,13 @@
 package ufront.ufadmin.controller;
-import ufront.web.Controller;
+
+import ufront.ufadmin.controller.UFAdminModuleController;
 import ufront.web.Dispatch;
 
-class DBAdminModule extends Controller
+class DBAdminModule extends UFAdminModuleController
 {
-	public var slug="db";
-	public var title="Database";
+	public function new() {
+		super( "db", "Database Admin" );
+	}
 
 	public function checkPermissions() {
 		return true; // Set up more fine grained permissions later...

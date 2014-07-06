@@ -37,20 +37,23 @@ using StringTools;
 		var modules:StringMap<UFAdminModuleController>;
 		var prefix:String;
 
-		public function new( c:HttpContext ) {
-			super( c );
+		public function new() {
+			super();
 			modules = new StringMap();
 
+		}
+
+		@post function afterInjection() {
 			// Figure out the prefix, needed for some absolute links
-			var uri = c.request.uri;
+			var uri = context.request.uri;
 			if ( uri.startsWith("/") ) uri = uri.substr( 1 );
 			if ( uri.endsWith("/") ) uri = uri.substr( 0, uri.length-1 );
-			var remainingUri = c.actionContext.uriParts.join("/");
+			var remainingUri = context.actionContext.uriParts.join("/");
 
 			var prefixLength = uri.length-remainingUri.length;
 			prefix = "/"+uri.substr( 0, prefixLength );
 			if ( prefix.endsWith("/") ) prefix = prefix.substr( 0, prefix.length-1 );
-
+			
 			// Add default modules
 			addModule( DBAdminModule );
 		}
@@ -69,7 +72,7 @@ using StringTools;
 			@param controller: the instantiated module
 		**/
 		public function addModule( controllerClass:Class<UFAdminModuleController> ) {
-			var controller = Type.createInstance( controllerClass, [this.context] );
+			var controller = context.injector.instantiate( controllerClass );
 			modules.set( controller.slug, controller );
 		}
 
