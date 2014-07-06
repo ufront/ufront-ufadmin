@@ -34,17 +34,11 @@ using StringTools;
 
 		@inject public var easyAuthApi:EasyAuthApi;
 
-		var modules:StringMap<UFAdminModuleController>;
+		var modules:StringMap<UFAdminModuleController> = new StringMap();
 		var prefix:String;
 
-		public function new() {
-			super();
-			modules = new StringMap();
-
-		}
-
-		@post function afterInjection() {
-			// Figure out the prefix, needed for some absolute links
+		@post public function postInjection() {
+			// Figure out the prefix.
 			var uri = context.request.uri;
 			if ( uri.startsWith("/") ) uri = uri.substr( 1 );
 			if ( uri.endsWith("/") ) uri = uri.substr( 0, uri.length-1 );
@@ -189,7 +183,7 @@ using StringTools;
 				links.push( module );
 			}
 			links.cleverSort( _.title );
-			var moduleLinks = [ for (l in links) '<li><a href="./${l.slug}/">${l.title}</a></li>' ].join("\n");
+			var moduleLinks = [ for (l in links) '<li><a href="$prefix/${l.slug}/">${l.title}</a></li>' ].join("\n");
 			
 
 			return CompileTime.interpolateFile( "ufront/ufadmin/view/container.html" );
