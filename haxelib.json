@@ -10,7 +10,7 @@
   "url": "https://github.com/ufront/ufront-admin",
   "dependencies": {
     "ufront-mvc": "1.0.0-rc.4",
-    "ufront-easyauth": "1.0.0-rc.4",
+    "ufront-easyauth": "1.0.0-rc.3",
     "hscript": "2.0.1",
     "ufront-orm": "1.0.0-rc.2",
     "cleversort": "1.0.2"
