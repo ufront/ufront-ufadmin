@@ -1,15 +1,13 @@
-package ufront.ufadmin.controller;
+package ufront.ufadmin;
 
 import ufront.web.Controller;
 
 /**
-	A typedef used to define a controller that can be used in the UFAdmin control panel.
-
-	It is similar to IndexController, allowing the module controller to be constructed and executed reliably.
+	A base-class used to define a controller that can be used in the UFAdmin control panel.
 
 	It adds "slug", "title" and "checkPermissions" so that menus appropriate for the current user can be constructed.
 **/
-class UFAdminModuleController extends Controller {
+class UFAdminModule extends Controller {
 	
 	/** The url slug for this controller.  Should be URL-friendly (a-zA-Z0-9_-) **/
 	public var slug:String;

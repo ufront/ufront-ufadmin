@@ -1,9 +1,9 @@
-package ufront.ufadmin.controller;
+package ufront.ufadmin.modules;
 
-import ufront.ufadmin.controller.UFAdminModuleController;
+import ufront.ufadmin.UFAdminModule;
 import ufront.web.Dispatch;
 
-class DBAdminModule extends UFAdminModuleController
+class DBAdminModule extends UFAdminModule
 {
 	public function new() {
 		super( "db", "Database Admin" );

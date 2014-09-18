@@ -9,10 +9,12 @@ import ufront.auth.model.*;
 import ufront.auth.*;
 import ufront.auth.AuthError;
 import ufront.web.HttpError;
+import ufront.view.TemplateData;
 import haxe.ds.StringMap;
 import ufront.auth.api.EasyAuthApi;
 import tink.CoreApi;
-using thx.util.CleverSort;
+using CleverSort;
+using haxe.io.Path;
 using Lambda;
 using StringTools;
 
@@ -26,30 +28,35 @@ using StringTools;
 
 		More can be added using `addModule()`
 	**/
-	class UFAdminController extends Controller
+	class UFAdminHomeController extends Controller
 	{
 		//
 		// Member variables / methods
 		//
 
 		@inject public var easyAuthApi:EasyAuthApi;
+		@inject("adminModules") public var moduleList:List<Class<UFAdminModule>>;
+		
+		var modules:StringMap<UFAdminModule> = new StringMap();
 
-		var modules:StringMap<UFAdminModuleController> = new StringMap();
-		var prefix:String;
+		static var prefix:String;
+		static var server:String;
 
 		@post public function postInjection() {
-			// Figure out the prefix.
+			
+			server = context.request.clientHeaders.get("Host");
+
 			var uri = context.request.uri;
 			if ( uri.startsWith("/") ) uri = uri.substr( 1 );
 			if ( uri.endsWith("/") ) uri = uri.substr( 0, uri.length-1 );
 			var remainingUri = context.actionContext.uriParts.join("/");
 
 			var prefixLength = uri.length-remainingUri.length;
-			prefix = "/"+uri.substr( 0, prefixLength );
-			if ( prefix.endsWith("/") ) prefix = prefix.substr( 0, prefix.length-1 );
+			prefix = "/"+uri.substr( 0, prefixLength ).addTrailingSlash();
 			
 			// Add default modules
-			addModule( DBAdminModule );
+			for ( module in moduleList )
+				addModule( module );
 		}
 
 		/**
@@ -65,7 +72,7 @@ using StringTools;
 			@param title: the name to give this module on the side menu
 			@param controller: the instantiated module
 		**/
-		public function addModule( controllerClass:Class<UFAdminModuleController> ) {
+		public function addModule( controllerClass:Class<UFAdminModule> ) {
 			var controller = context.injector.instantiate( controllerClass );
 			modules.set( controller.slug, controller );
 		}
@@ -91,7 +98,7 @@ using StringTools;
 			switch easyAuthApi.attemptLogin( args.user, args.pass ) {
 				case Success( u ):
 					if ( passesAuth() ) 
-						return new RedirectResult(prefix+"/");
+						return new RedirectResult(prefix);
 					else 
 						// They're logged in, but don't have permission to be here.
 						throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
@@ -111,13 +118,30 @@ using StringTools;
 		public function index():ActionResult {
 			checkTablesExists();
 			if ( passesAuth() ) {
-				var view = CompileTime.interpolateFile( "ufront/ufadmin/view/welcome.html" );
-				return wrapInLayout( "UF Admin Console", wrapInContainer(view) );
+			
+				var links:Array<{ slug:String, title:String }> = [];
+
+				for ( module in modules ) 
+					links.push( module );
+				links.cleverSort( _.title );
+				var moduleLinks = [ for (l in links) '<li><a href="$prefix/${l.slug}/" target="frame">${l.title}</a></li>' ].join("\n");
+
+				var template = CompileTime.readFile( "ufront/ufadmin/view/container.html" );
+				return wrapInLayout( "Ufront Admin Console", template, { links:links } );
 			}
 			else {
 				if (context.auth.isLoggedIn()) return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 				else return loginScreen();
 			}
+		}
+		
+		@:route( "/welcome/" )
+		public function welcomePage() {
+			if ( passesAuth() ) {
+				var template = CompileTime.readFile( "ufront/ufadmin/view/welcome.html" );
+				return wrapInLayout( "Ufront Admin Console", template, {} );
+			}
+			else return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 		}
 
 		@:route( "/$module/*" )
@@ -125,7 +149,7 @@ using StringTools;
 
 			if ( passesAuth() ) {
 				if ( modules.exists(module) ) {
-					var controller = modules.get(module);
+					var controller = modules.get( module );
 					return controller.execute();
 				}
 				else return throw HttpError.pageNotFound();
@@ -164,29 +188,25 @@ using StringTools;
 		}
 
 		function drawLoginScreen( existingUser:String ) {
-			var loginView = CompileTime.interpolateFile( "ufront/ufadmin/view/login.html" );
-			return wrapInLayout( "UF Admin Login", loginView );
+			return new ViewResult({
+				existingUser: existingUser,
+				prefix: prefix,
+				server: server,
+			}).usingTemplateString(
+				CompileTime.readFile( "/ufront/ufadmin/view/login.html" ),
+				CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
+			);
 		}
 
-		function wrapInLayout( title:String, content:String ) {
-			var server = context.request.clientHeaders.get("Host");
-			var content = CompileTime.interpolateFile( "ufront/ufadmin/view/layout.html" );
-			return new ContentResult( content, "text/html" );
-		}
-
-		function wrapInContainer( view:String ) {
-			// var layout = new UFAdminLayout();
-
-			var links:Array<{ slug:String, title:String }> = [];
-
-			for ( module in modules ) {
-				links.push( module );
-			}
-			links.cleverSort( _.title );
-			var moduleLinks = [ for (l in links) '<li><a href="$prefix/${l.slug}/">${l.title}</a></li>' ].join("\n");
-			
-
-			return CompileTime.interpolateFile( "ufront/ufadmin/view/container.html" );
+		public static function wrapInLayout( title:String, template:String, data:TemplateData ) {
+			return new ViewResult( data )
+				.setVar( "title", title )
+				.setVar( "prefix", prefix )
+				.setVar( "server", server )
+				.usingTemplateString(
+					template,
+					CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
+				);
 		}
 	}
 #end
