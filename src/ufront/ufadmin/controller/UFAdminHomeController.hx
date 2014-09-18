@@ -38,21 +38,8 @@ using StringTools;
 		@inject("adminModules") public var moduleList:List<Class<UFAdminModule>>;
 		
 		var modules:StringMap<UFAdminModule> = new StringMap();
-
-		static var prefix:String;
-		static var server:String;
-
+		
 		@post public function postInjection() {
-			
-			server = context.request.clientHeaders.get("Host");
-
-			var uri = context.request.uri;
-			if ( uri.startsWith("/") ) uri = uri.substr( 1 );
-			if ( uri.endsWith("/") ) uri = uri.substr( 0, uri.length-1 );
-			var remainingUri = context.actionContext.uriParts.join("/");
-
-			var prefixLength = uri.length-remainingUri.length;
-			prefix = "/"+uri.substr( 0, prefixLength ).addTrailingSlash();
 			
 			// Add default modules
 			for ( module in moduleList )
@@ -98,7 +85,7 @@ using StringTools;
 			switch easyAuthApi.attemptLogin( args.user, args.pass ) {
 				case Success( u ):
 					if ( passesAuth() ) 
-						return new RedirectResult(prefix);
+						return new RedirectResult( baseUri );
 					else 
 						// They're logged in, but don't have permission to be here.
 						throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
@@ -124,10 +111,9 @@ using StringTools;
 				for ( module in modules ) 
 					links.push( module );
 				links.cleverSort( _.title );
-				var moduleLinks = [ for (l in links) '<li><a href="$prefix/${l.slug}/" target="frame">${l.title}</a></li>' ].join("\n");
 
 				var template = CompileTime.readFile( "ufront/ufadmin/view/container.html" );
-				return wrapInLayout( "Ufront Admin Console", template, { links:links } );
+				return UFAdminModule.wrapInLayout( "Ufront Admin Console", template, { links:links } );
 			}
 			else {
 				if (context.auth.isLoggedIn()) return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
@@ -139,7 +125,7 @@ using StringTools;
 		public function welcomePage() {
 			if ( passesAuth() ) {
 				var template = CompileTime.readFile( "ufront/ufadmin/view/welcome.html" );
-				return wrapInLayout( "Ufront Admin Console", template, {} );
+				return UFAdminModule.wrapInLayout( "Ufront Admin Console", template, {} );
 			}
 			else return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 		}
@@ -190,23 +176,11 @@ using StringTools;
 		function drawLoginScreen( existingUser:String ) {
 			return new ViewResult({
 				existingUser: existingUser,
-				prefix: prefix,
-				server: server,
+				baseUri: baseUri,
 			}).usingTemplateString(
 				CompileTime.readFile( "/ufront/ufadmin/view/login.html" ),
 				CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
 			);
-		}
-
-		public static function wrapInLayout( title:String, template:String, data:TemplateData ) {
-			return new ViewResult( data )
-				.setVar( "title", title )
-				.setVar( "prefix", prefix )
-				.setVar( "server", server )
-				.usingTemplateString(
-					template,
-					CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
-				);
 		}
 	}
 #end

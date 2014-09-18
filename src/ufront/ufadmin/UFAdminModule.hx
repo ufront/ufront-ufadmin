@@ -1,6 +1,8 @@
 package ufront.ufadmin;
 
 import ufront.web.Controller;
+import ufront.web.result.ViewResult;
+import ufront.view.TemplateData;
 
 /**
 	A base-class used to define a controller that can be used in the UFAdmin control panel.
@@ -22,7 +24,7 @@ class UFAdminModule extends Controller {
 	}
 
 	@:route( "this-is-a-workaround" )
-	function workaround() {
+	function thisIsAWorkaround():Void {
 		// Currently there is no way to skip checking for @:route metadata in the build macro.
 		// Until I set that up, this route / method exists solely to silence the error message.
 		// Don't hate me!
@@ -39,5 +41,23 @@ class UFAdminModule extends Controller {
 	**/
 	public function checkPermissions():Bool {
 		return true;
+	}
+	
+	/**
+		A helper function for UFAdmin modules to wrap their content in a layout.
+		The layout has a simple HTML structure, the bootstrap stylesheet, and a base HREF relative the `/ufadmin/` path.
+
+		@param title The title of the current page.
+		@param template The string of the template to use. We recommend including this using `CompileTime.readFile(view.html)` or similar to avoid runtime dependencies.
+		@param data The `TemplateData` to use when rendering the template.
+		@return ViewResult A ready to use ViewResult.
+	**/
+	public static function wrapInLayout( title:String, template:String, data:TemplateData ):ViewResult {
+		return new ViewResult( data )
+			.setVar( "title", title )
+			.usingTemplateString(
+				template,
+				CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
+			);
 	}
 }
