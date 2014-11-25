@@ -140,7 +140,7 @@ using StringTools;
 				}
 				else return throw HttpError.pageNotFound();
 			}
-			else return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
+			else return throw NoPermission( UFAdminPermissions.UFACanAccessAdminArea );
 		}
 
 		//
@@ -152,31 +152,12 @@ using StringTools;
 		}
 
 		function passesAuth():Bool {
-			// Only check if tables already exist, otherwise, they're allowed in
-			try {
-				if (sys.db.TableCreate.exists(Permission.manager)) {
-					var permissionID = Permission.getPermissionID( UFAdminPermissions.UFACanAccessAdminArea );
-					var permissions = Permission.manager.search($permission == permissionID);
-
-					// If a group has this permission, and at least one member belongs to such a group.
-					if (permissions.length>0 && permissions.exists(function (p) { return p.user!=null || (p.group!=null && p.group.users.length>0); })) {
-						return context.auth.hasPermission(UFAdminPermissions.UFACanAccessAdminArea);
-					}
-				}
-			}
-			catch ( e:Dynamic ) {
-				ufError('Failed to check for permissions: $e');
-			}
-			
-			// Either Auth tables aren't set up yet, or no one has "UFACanAccessAdminArea", so let them in.
-			ufLog("/ufadmin/ is being accessed when the tables and permissions are not set up, so we are not checking authentication.");
-			return true;
+			return context.auth.hasPermission( UFAdminPermissions.UFACanAccessAdminArea );
 		}
 
 		function drawLoginScreen( existingUser:String ) {
 			return new ViewResult({
 				existingUser: existingUser,
-				baseUri: baseUri,
 			}).usingTemplateString(
 				CompileTime.readFile( "/ufront/ufadmin/view/login.html" ),
 				CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
