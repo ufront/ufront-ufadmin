@@ -15,15 +15,19 @@ class DBAdminModule extends UFAdminModule
 	
 	@:route("/*")
 	public function doDefault() {
-		if ( sys.db.Manager.cnx==null ) {
-			return 'No Database Connection Found';
-		}
-		else {
-			spadm.AdminStyle.BASE_URL = baseUri;
-			ufront.spadm.DBAdmin.handler(baseUri);
-			context.completion.set( CRequestHandlersComplete );
-			context.completion.set( CFlushComplete );
-			return null;
-		}
+		#if server
+			if ( sys.db.Manager.cnx==null ) {
+				return 'No Database Connection Found';
+			}
+			else {
+				spadm.AdminStyle.BASE_URL = baseUri;
+				ufront.spadm.DBAdmin.handler(baseUri);
+				context.completion.set( CRequestHandlersComplete );
+				context.completion.set( CFlushComplete );
+				return null;
+			}
+		#elseif
+			return 'DBAdminModule is not available on the client';
+		#end
 	}
 }
