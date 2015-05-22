@@ -1,7 +1,6 @@
 package ufront.ufadmin.modules;
 
 import ufront.ufadmin.UFAdminModule;
-import ufront.web.Dispatch;
 
 class DBAdminModule extends UFAdminModule
 {
