@@ -8,11 +8,12 @@ class DBAdminModule extends UFAdminModule
 	public function new() {
 		super( "db", "Database Admin" );
 	}
-	
+
 	public function checkPermissions() {
-		return true; // Set up more fine grained permissions later...
+		// Currently anyone who has access to ufadmin has access to this DBAdminModule.
+		return true;
 	}
-	
+
 	@:route("/*")
 	public function doDefault() {
 		#if server

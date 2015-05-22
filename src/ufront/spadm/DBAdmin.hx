@@ -10,7 +10,7 @@ package ufront.spadm;
 
 	/**
 	* An extension of DBAdmin that co-operates better with ufront.db classes
-	* 
+	*
 	* Changes
 	*  - Ignore classes with @noTable metadata
 	*  - Find classes using CompileTime.getAllClasses() instead
@@ -29,11 +29,11 @@ package ufront.spadm;
 			manyToManyTableNames = [];
 		}
 
-		override function getTables() 
+		override function getTables()
 		{
 			var tables:Array<TableInfos> = new Array();
 
-			var classes = CompileTime.getAllClasses(Object);
+			var classes = CompileTime.getAllClasses(sys.db.Object);
 			for (cl in classes)
 			{
 				addTable(tables, cl);
@@ -93,7 +93,7 @@ package ufront.spadm;
 			tables.push(new TableInfos(Type.getClassName(model)));
 		}
 
-		public static function handler( ?baseUrl:String ) 
+		public static function handler( ?baseUrl:String )
 		{
 			Manager.initialize(); // make sure it's been done
 			try {
