@@ -2,13 +2,12 @@ package ufront.ufadmin.modules;
 
 import ufront.ufadmin.UFAdminModule;
 
-class DBAdminModule extends UFAdminModule
-{
+class DBAdminModule extends UFAdminModule {
 	public function new() {
 		super( "db", "Database Admin" );
 	}
 
-	public function checkPermissions() {
+	override public function checkPermissions() {
 		return true; // Set up more fine grained permissions later...
 	}
 
