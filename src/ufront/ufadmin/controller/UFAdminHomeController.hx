@@ -13,14 +13,13 @@ import ufront.view.TemplateData;
 import haxe.ds.StringMap;
 import ufront.auth.api.EasyAuthApi;
 import tink.CoreApi;
-using CleverSort;
 using haxe.io.Path;
 using Lambda;
 using StringTools;
 
 #if server
 	/**
-		A simple admin area for your site.  
+		A simple admin area for your site.
 
 		Default modules include:
 
@@ -36,11 +35,11 @@ using StringTools;
 
 		@inject public var easyAuthApi:EasyAuthApi;
 		@inject("adminModules") public var moduleList:List<Class<UFAdminModule>>;
-		
+
 		var modules:StringMap<UFAdminModule> = new StringMap();
-		
+
 		@post public function postInjection() {
-			
+
 			// Add default modules
 			for ( module in moduleList )
 				addModule( module );
@@ -73,7 +72,7 @@ using StringTools;
 
 		//
 		// Key Routes
-		// 
+		//
 
 		@:route( "/login/", GET )
 		public function loginScreen():ActionResult {
@@ -84,9 +83,9 @@ using StringTools;
 		public function attemptLogin( args:{ user:String, pass:String } ):ActionResult {
 			switch easyAuthApi.attemptLogin( args.user, args.pass ) {
 				case Success( u ):
-					if ( passesAuth() ) 
+					if ( passesAuth() )
 						return new RedirectResult( baseUri );
-					else 
+					else
 						// They're logged in, but don't have permission to be here.
 						throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
 				case Failure( e ):
@@ -101,16 +100,16 @@ using StringTools;
 			return loginScreen();
 		}
 
-		@:route("/") 
+		@:route("/")
 		public function index():ActionResult {
 			checkTablesExists();
 			if ( passesAuth() ) {
-			
+
 				var links:Array<{ slug:String, title:String }> = [];
 
-				for ( module in modules ) 
+				for ( module in modules )
 					links.push( module );
-				links.cleverSort( _.title );
+				links.sort( function(l1,l2) Reflect.compare(l1.title,l2.title) );
 
 				var template = CompileTime.readFile( "ufront/ufadmin/view/container.html" );
 				return UFAdminModule.wrapInLayout( "Ufront Admin Console", template, { links:links } );
@@ -120,7 +119,7 @@ using StringTools;
 				else return loginScreen();
 			}
 		}
-		
+
 		@:route( "/welcome/" )
 		public function welcomePage() {
 			if ( passesAuth() ) {
@@ -145,7 +144,7 @@ using StringTools;
 
 		//
 		// Private
-		// 
+		//
 
 		function checkTablesExists() {
 			// if (!sys.db.TableCreate.exists(AdminTaskLog.manager)) sys.db.TableCreate.create(AdminTaskLog.manager);
