@@ -109,7 +109,7 @@ using StringTools;
 
 				for ( module in modules )
 					links.push( module );
-				links.sort( function(l1,l2) Reflect.compare(l1.title,l2.title) );
+				links.sort( function(l1,l2) return Reflect.compare(l1.title,l2.title) );
 
 				var template = CompileTime.readFile( "ufront/ufadmin/view/container.html" );
 				return UFAdminModule.wrapInLayout( "Ufront Admin Console", template, { links:links } );
