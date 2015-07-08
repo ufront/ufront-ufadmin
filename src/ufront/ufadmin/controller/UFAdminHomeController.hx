@@ -13,6 +13,7 @@ import ufront.view.TemplateData;
 import haxe.ds.StringMap;
 import ufront.auth.api.EasyAuthApi;
 import tink.CoreApi;
+import minject.Injector;
 using haxe.io.Path;
 using Lambda;
 using StringTools;
@@ -27,47 +28,27 @@ using StringTools;
 
 		More can be added using `addModule()`
 	**/
-	class UFAdminHomeController extends Controller
-	{
+	class UFAdminHomeController extends Controller {
 		//
 		// Member variables / methods
 		//
 
 		@inject public var easyAuthApi:EasyAuthApi;
-		@inject("adminModules") public var moduleList:List<Class<UFAdminModule>>;
 
-		var modules:StringMap<UFAdminModule> = new StringMap();
-
-		@post public function postInjection() {
-
-			// Add default modules
-			for ( module in moduleList )
-				addModule( module );
-		}
+		var modules:StringMap<UFAdminModule>;
 
 		/**
-			Add a controller to the UFAdminController menu
+		Add a set of modules to the controller.
 
-			Any controller added will be available as a subroute of your admin area.  eg `/ufadmin/db/`
-
-			The module will only be accessible if the user has the `UFAdminPermissions.CanAccessAdminArea` permission and if the module's `checkPermissions()` function returns true.
-
-			Modules will be sorted alphabetically by their `slug` field.
-
-			@param name: the slug/URL to use for this module
-			@param title: the name to give this module on the side menu
-			@param controller: the instantiated module
+		This should be run as part of dependency injection.
 		**/
-		public function addModule( controllerClass:Class<UFAdminModule> ) {
-			var controller = context.injector.instantiate( controllerClass );
-			modules.set( controller.slug, controller );
-		}
-
-		/**
-			Clear the existing modules, including those added by default.
-		**/
-		public function clearModules() {
+		@inject("", "adminModules")
+		public function addModules( injector:Injector, moduleList:List<Class<UFAdminModule>> ) {
 			modules = new StringMap();
+			for ( module in moduleList ) {
+				var controller = injector.instantiate( module );
+				modules.set( controller.slug, controller );
+			}
 		}
 
 		//
