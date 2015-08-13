@@ -68,7 +68,7 @@ using StringTools;
 						return new RedirectResult( baseUri );
 					else
 						// They're logged in, but don't have permission to be here.
-						throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
+						throw HttpError.authError( ANoPermission(UFAdminPermissions.UFACanAccessAdminArea) );
 				case Failure( e ):
 					// They were not able to log in.
 					return drawLoginScreen(args.user);
@@ -96,7 +96,7 @@ using StringTools;
 				return UFAdminModule.wrapInLayout( "Ufront Admin Console", template, { links:links } );
 			}
 			else {
-				if (context.auth.isLoggedIn()) return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
+				if (context.auth.isLoggedIn()) return throw HttpError.authError( ANoPermission(UFAdminPermissions.UFACanAccessAdminArea) );
 				else return loginScreen();
 			}
 		}
@@ -107,7 +107,7 @@ using StringTools;
 				var template = CompileTime.readFile( "ufront/ufadmin/view/welcome.html" );
 				return UFAdminModule.wrapInLayout( "Ufront Admin Console", template, {} );
 			}
-			else return throw NoPermission(UFAdminPermissions.UFACanAccessAdminArea);
+			else return throw HttpError.authError( ANoPermission(UFAdminPermissions.UFACanAccessAdminArea) );
 		}
 
 		@:route( "/$module/*" )
@@ -120,7 +120,7 @@ using StringTools;
 				}
 				else return throw HttpError.pageNotFound();
 			}
-			else return throw NoPermission( UFAdminPermissions.UFACanAccessAdminArea );
+			else return throw HttpError.authError( ANoPermission(UFAdminPermissions.UFACanAccessAdminArea) );
 		}
 
 		//
