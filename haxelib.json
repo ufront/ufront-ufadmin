@@ -5,13 +5,18 @@
   "tags": ["ufront","web","neko","dashboard","admin"],
   "description": "A simple web-based admin console for your ufront website.  Has support for Nicolas' DBAdmin tool, and very simple integrations with ufront-easyauth, ufront-mail etc.  Is pluggable so you can create your own admin modules.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Hide DBAdminModule and DBAdmin on the client.",
-  "version": "1.0.0-beta.11",
+  "releasenote": "
+- Get stylesheet to work on https also
+- Make sure DBAdmin has access to classes extending sys.db.Object, not just ufront.db.Object
+- Remove cleversort dependency
+- Use a different mechanism for injecting ufadmin modules into the menu.
+",
+  "version": "1.0.0-beta.12",
   "url": "https://github.com/ufront/ufront-admin",
   "dependencies": {
     "ufront-mvc": "",
     "ufront-orm": "",
     "ufront-easyauth": "",
-    "hscript": ""
+    "hscript": "2.0.4"
   }
 }
