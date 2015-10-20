@@ -19,8 +19,9 @@ class DBAdminModule extends UFAdminModule {
 				return 'No Database Connection Found';
 			}
 			else {
-				spadm.AdminStyle.BASE_URL = baseUri;
-				ufront.spadm.DBAdmin.handler(baseUri);
+				var base = context.generateUri( baseUri.substr(1) );
+				spadm.AdminStyle.BASE_URL = base;
+				ufront.spadm.DBAdmin.handler(base);
 				context.completion.set( CRequestHandlersComplete );
 				context.completion.set( CFlushComplete );
 				return null;
