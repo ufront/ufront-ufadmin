@@ -61,18 +61,20 @@ using StringTools;
 		}
 
 		@:route( "/login/", POST )
-		public function attemptLogin( args:{ user:String, pass:String } ):ActionResult {
-			switch easyAuthApi.attemptLogin( args.user, args.pass ) {
-				case Success( u ):
-					if ( passesAuth() )
-						return new RedirectResult( baseUri );
-					else
-						// They're logged in, but don't have permission to be here.
-						throw HttpError.authError( ANoPermission(UFAdminPermissions.UFACanAccessAdminArea) );
-				case Failure( e ):
-					// They were not able to log in.
-					return drawLoginScreen(args.user);
-			}
+		public function attemptLogin( args:{ user:String, pass:String } ):Future<ActionResult> {
+			return easyAuthApi.attemptLogin( args.user, args.pass ).map(function(outcome):ActionResult {
+				switch outcome {
+					case Success( u ):
+						if ( passesAuth() )
+							return new RedirectResult( baseUri );
+						else
+							// They're logged in, but don't have permission to be here.
+							throw HttpError.authError( ANoPermission(UFAdminPermissions.UFACanAccessAdminArea) );
+					case Failure( e ):
+						// They were not able to log in.
+						return drawLoginScreen(args.user);
+				}
+			});
 		}
 
 		@:route( "/logout/" )
