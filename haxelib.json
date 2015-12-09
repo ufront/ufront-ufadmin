@@ -6,12 +6,11 @@
   "description": "A simple web-based admin console for your ufront website.  Has support for Nicolas' DBAdmin tool, and very simple integrations with ufront-easyauth, ufront-mail etc.  Is pluggable so you can create your own admin modules.",
   "contributors": ["fponticelli","jason"],
   "releasenote": "
-- Get stylesheet to work on https also
-- Make sure DBAdmin has access to classes extending sys.db.Object, not just ufront.db.Object
-- Remove cleversort dependency
-- Use a different mechanism for injecting ufadmin modules into the menu.
+- Support URL filters in DBAdminModule.
+- Update for latest Ufront-MVC, Ufront-EasyAuth.
+- Bug fix: Make ure we initiate a session before we attempt a login.
 ",
-  "version": "1.0.0-beta.12",
+  "version": "1.0.0-beta.13",
   "url": "https://github.com/ufront/ufront-admin",
   "dependencies": {
     "ufront-mvc": "",
