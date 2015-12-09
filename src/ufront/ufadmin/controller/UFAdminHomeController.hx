@@ -122,6 +122,8 @@ using StringTools;
 			if ( passesAuth() ) {
 				if ( modules.exists(module) ) {
 					var controller = modules.get( module );
+					// Reset the baseUri...
+					controller.injectContext( context );
 					return controller.execute();
 				}
 				else return throw HttpError.pageNotFound();
