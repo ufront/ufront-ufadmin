@@ -4,13 +4,9 @@
   "classPath": "src",
   "tags": ["ufront","web","neko","dashboard","admin"],
   "description": "A simple web-based admin console for your ufront website.  Has support for Nicolas' DBAdmin tool, and very simple integrations with ufront-easyauth, ufront-mail etc.  Is pluggable so you can create your own admin modules.",
-  "contributors": ["fponticelli","jason"],
-  "releasenote": "
-- Support URL filters in DBAdminModule.
-- Update for latest Ufront-MVC, Ufront-EasyAuth.
-- Bug fix: Make ure we initiate a session before we attempt a login.
-",
-  "version": "1.0.0-beta.13",
+  "contributors": ["fponticelli","jason","andyli","kevinresol"],
+  "releasenote": "Remove explicit hscript version.",
+  "version": "1.0.0-beta.14",
   "url": "https://github.com/ufront/ufront-admin",
   "dependencies": {
     "ufront-mvc": "",
