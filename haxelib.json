@@ -7,7 +7,7 @@
   "contributors": ["fponticelli","jason","andyli","kevinresol"],
   "releasenote": "Remove explicit hscript version.",
   "version": "1.0.0-beta.14",
-  "url": "https://github.com/ufront/ufront-admin",
+  "url": "https://github.com/ufront/ufront-ufadmin",
   "dependencies": {
     "ufront-mvc": "",
     "ufront-orm": "",
