@@ -147,8 +147,8 @@ using StringTools;
 			return new ViewResult({
 				existingUser: existingUser,
 			}).usingTemplateString(
-				CompileTime.readFile( "/ufront/ufadmin/view/login.html" ),
-				CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
+				CompileTime.readFile( "ufront/ufadmin/view/login.html" ),
+				CompileTime.readFile( "ufront/ufadmin/view/layout.html" )
 			);
 		}
 	}
