@@ -10,7 +10,7 @@ import ufront.view.TemplateData;
 	It adds "slug", "title" and "checkPermissions" so that menus appropriate for the current user can be constructed.
 **/
 class UFAdminModule extends Controller {
-	
+
 	/** The url slug for this controller.  Should be URL-friendly (a-zA-Z0-9_-) **/
 	public var slug:String;
 
@@ -29,10 +29,10 @@ class UFAdminModule extends Controller {
 		// Until I set that up, this route / method exists solely to silence the error message.
 		// Don't hate me!
 	}
-	
+
 	/**
 		Check if the current auth session has permission to use this module.
-		
+
 		Use `context.auth.checkPermission()` etc to check.
 
 		If this does not return true, the module will not be added to menu, and the user will not be able to access this module.
@@ -42,7 +42,7 @@ class UFAdminModule extends Controller {
 	public function checkPermissions():Bool {
 		return true;
 	}
-	
+
 	/**
 		A helper function for UFAdmin modules to wrap their content in a layout.
 		The layout has a simple HTML structure, the bootstrap stylesheet, and a base HREF relative the `/ufadmin/` path.
@@ -57,7 +57,7 @@ class UFAdminModule extends Controller {
 			.setVar( "title", title )
 			.usingTemplateString(
 				template,
-				CompileTime.readFile( "/ufront/ufadmin/view/layout.html" )
+				CompileTime.readFile( "ufront/ufadmin/view/layout.html" )
 			);
 	}
 }
